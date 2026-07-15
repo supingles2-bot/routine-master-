@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Routine Master: Unit 2 Challenge</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&family=Quicksand:wght@300..700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Quicksand', sans-serif;
+      background-color: #f0f9ff;
+    }
+    h1, h2, h3, .title-font {
+      font-family: 'Fredoka', sans-serif;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+  <div id="game-container" class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 max-w-2xl w-full border-4 border-sky-400 relative overflow-hidden">
+    <!-- Header/Progress -->
+    <div class="flex justify-between items-center mb-6 border-b border-sky-100 pb-4">
+      <div>
+        <span class="text-xs font-bold uppercase tracking-wider text-sky-500">Unit 2: My Daily Routine</span>
+        <h1 class="text-2xl font-bold text-sky-950">Routine Master! ⏰</h1>
+      </div>
+      <div class="text-right">
+        <span class="text-sm font-bold text-amber-500 block">Score: <span id="score-display">0</span> pts</span>
+        <span class="text-xs font-medium text-slate-400 block" id="progress-text">Stage 1 of 3</span>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="w-full bg-slate-100 h-3 rounded-full mb-6 overflow-hidden">
+      <div id="progress-bar" class="bg-gradient-to-r from-sky-400 to-emerald-400 h-full transition-all duration-500" style="width: 10%"></div>
+    </div>
+
+    <!-- MAIN GAME SCREENS -->
+
+    <!-- 1. Start Screen -->
+    <div id="start-screen" class="space-y-6 text-center py-8">
+      <div class="text-6xl animate-bounce">🎒</div>
+      <h2 class="text-3xl font-extrabold text-sky-900">Are you ready to save energy and master your routine?</h2>
+      <p class="text-slate-600 text-base max-w-md mx-auto">
+        Help Leo, Daisy, and Fred order their days. Learn prepositions, place adverbs correctly, and master daily vocabulary!
+      </p>
+      <button onclick="startGame()" class="bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white font-extrabold text-lg px-8 py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">
+        Start Challenge! 🚀
+      </button>
+    </div>
+
+    <!-- 2. Interactive Levels -->
+    <div id="level-screen" class="hidden space-y-6">
+      <div id="level-intro" class="bg-sky-50 p-4 rounded-2xl border border-sky-200">
+        <h3 id="stage-title" class="font-bold text-sky-950 text-lg">Stage 1: Prepositions of Time</h3>
+        <p id="stage-desc" class="text-sm text-slate-600">Choose the correct preposition: AT, IN, or ON.</p>
+      </div>
+
+      <!-- Question / Activity Area -->
+      <div id="activity-area" class="py-4">
+        <!-- Inside here, JS will inject different templates depending on the stage -->
+      </div>
+
+      <!-- Feedback Toast -->
+      <div id="feedback-box" class="hidden p-4 rounded-xl text-center font-bold text-lg transition-all duration-300"></div>
+    </div>
+
+    <!-- 3. Final Score & Badge Screen -->
+    <div id="final-screen" class="hidden text-center py-8 space-y-6">
+      <div class="relative inline-block">
+        <div class="text-8xl animate-pulse">🏆</div>
+        <span class="absolute -bottom-2 -right-2 bg-amber-400 text-white font-bold text-xs px-3 py-1 rounded-full border-2 border-white uppercase">Certified!</span>
+      </div>
+      <h2 class="text-4xl font-extrabold text-sky-900">Amazing Job!</h2>
+      <p class="text-slate-600 text-lg max-w-md mx-auto">
+        You've completed the challenge and unlocked the <strong class="text-emerald-500">Green Energy Saver Badge</strong>! 🌱
+      </p>
+
+      <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 max-w-sm mx-auto">
+        <span class="block text-xs font-bold text-emerald-600 uppercase">Your Final Score</span>
+        <span class="text-5xl font-black text-emerald-700" id="final-score">0</span>
+        <span class="block text-xs text-slate-400 mt-1">out of 2000 points</span>
+      </div>
+
+      <div class="flex justify-center gap-4">
+        <button onclick="restartGame()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-6 py-3 rounded-xl transition-colors">
+          Play Again 🔄
+        </button>
+        <button onclick="shareResult()" class="bg-sky-500 hover:bg-sky-600 text-white font-bold px-6 py-3 rounded-xl transition-colors shadow">
+          Class Certificate 🎓
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Game Data & State
+    let score = 0;
+    let currentStage = 1; // 1: Prepositions, 2: Adverbs, 3: Verbs
+    let currentQuestionIndex = 0;
+    
+    // Questions Databases
+    const stage1Questions = [
+      { sentence: "Leo wakes up ___ 6:30 AM every morning.", options: ["at", "in", "on"], correct: "at" },
+      { sentence: "We don't go to school ___ Sundays.", options: ["at", "in", "on"], correct: "on" },
+      { sentence: "My family watches TV ___ the evening.", options: ["at", "in", "on"], correct: "in" },
+      { sentence: "Leo's school term begins ___ September.", options: ["at", "in", "on"], correct: "in" },
+      { sentence: "He does his homework ___ the afternoon.", options: ["at", "in", "on"], correct: "in" },
+      { sentence: "The street lights turn off ___ night to save power.", options: ["at", "in", "on"], correct: "at" },
+      { sentence: "We always clean the park ___ Earth Day.", options: ["at", "in", "on"], correct: "on" }
+    ];
+
+    const stage2Questions = [
+      { 
+        instruction: "Reorder the words to make a correct sentence:",
+        words: ["Leo", "always", "turns off", "the lights"],
+        correctOrder: ["Leo", "always", "turns off", "the lights"],
+        hint: "Adverbs of frequency go before the main verb."
+      },
+      { 
+        instruction: "Reorder the words to make a correct sentence:",
+        words: ["usually", "They", "walk", "to school"],
+        correctOrder: ["They", "usually", "walk", "to school"],
+        hint: "Adverbs of frequency go after the subject."
+      },
+      {
+        instruction: "Reorder the words to make a correct sentence:",
+        words: ["is", "Daisy", "in bed", "always", "by 9:30"],
+        correctOrder: ["Daisy", "is", "always", "in bed", "by 9:30"],
+        hint: "Adverbs of frequency go AFTER the auxiliary verb 'to be'."
+      },
+      {
+        instruction: "Reorder the words to make a correct sentence:",
+        words: ["never", "waste", "We", "water"],
+        correctOrder: ["We", "never", "waste", "water"],
+        hint: "Place the frequency adverb 'never' directly after the subject 'We'."
+      },
+      {
+        instruction: "Reorder the words to make a correct sentence:",
+        words: ["He", "often", "saves", "energy"],
+        correctOrder: ["He", "often", "saves", "energy"],
+        hint: "Place 'often' before the main action verb 'saves'."
+      },
+      {
+        instruction: "Reorder the words to make a correct sentence:",
+        words: ["are", "They", "always", "on time"],
+        correctOrder: ["They", "are", "always", "on time"],
+        hint: "Adverbs of frequency always go AFTER the verb 'to be'."
+      },
+      {
+        instruction: "Reorder the words to make a correct sentence:",
+        words: ["sometimes", "She", "recycles", "plastic"],
+        correctOrder: ["She", "sometimes", "recycles", "plastic"],
+        hint: "Put the adverb 'sometimes' right after the subject 'She'."
+      }
+    ];
+
+    const stage3Questions = [
+      { verb: "brush", definition: "To clean your teeth, ideally turning off the tap to save water.", options: ["brush", "eat", "wake up"] },
+      { verb: "prepare", definition: "To cook or make food (like Leo's mother preparing dinner on a stove).", options: ["sleep", "prepare", "travel"] },
+      { verb: "go", definition: "To move on foot to school to avoid using fossil fuels.", options: ["do", "go", "brush"] },
+      { verb: "wake up", definition: "To stop sleeping and open your eyes early at 6:30 AM.", options: ["sleep", "wake up", "arrive"] },
+      { verb: "sleep", definition: "To rest your body for eight hours at night with the lights off.", options: ["sleep", "work", "play"] },
+      { verb: "arrive", definition: "To reach school on foot early, around 7:45 AM.", options: ["arrive", "take", "prepare"] }
+    ];
+
+    // Sound/Vibe Effects simple simulation
+    function triggerSuccess() {
+      const fb = document.getElementById("feedback-box");
+      fb.className = "p-4 rounded-xl text-center font-bold text-lg bg-emerald-100 text-emerald-800 transition-all duration-300";
+      fb.innerText = "⭐ Correct! (+100 points)";
+      fb.classList.remove("hidden");
+    }
+
+    function triggerFail(hintText = "Try again!") {
+      const fb = document.getElementById("feedback-box");
+      fb.className = "p-4 rounded-xl text-center font-bold text-lg bg-rose-100 text-rose-800 transition-all duration-300";
+      fb.innerText = `❌ Incorrect. Hint: ${hintText}`;
+      fb.classList.remove("hidden");
+    }
+
+    function startGame() {
+      score = 0;
+      currentStage = 1;
+      currentQuestionIndex = 0;
+      updateScore(0);
+      
+      document.getElementById("start-screen").classList.add("hidden");
+      document.getElementById("final-screen").classList.add("hidden");
+      document.getElementById("level-screen").classList.remove("hidden");
+      
+      loadStageQuestion();
+    }
+
+    function updateScore(amount) {
+      score += amount;
+      document.getElementById("score-display").innerText = score;
+    }
+
+    function updateProgressBar() {
+      let percent = 10;
+      if (currentStage === 1) {
+        percent = 10 + (currentQuestionIndex / stage1Questions.length) * 30;
+        document.getElementById("progress-text").innerText = `Stage 1: Question ${currentQuestionIndex + 1}/${stage1Questions.length}`;
+      } else if (currentStage === 2) {
+        percent = 40 + (currentQuestionIndex / stage2Questions.length) * 30;
+        document.getElementById("progress-text").innerText = `Stage 2: Question ${currentQuestionIndex + 1}/${stage2Questions.length}`;
+      } else if (currentStage === 3) {
+        percent = 70 + (currentQuestionIndex / stage3Questions.length) * 30;
+        document.getElementById("progress-text").innerText = `Stage 3: Question ${currentQuestionIndex + 1}/${stage3Questions.length}`;
+      }
+      document.getElementById("progress-bar").style.width = `${percent}%`;
+    }
+
+    function loadStageQuestion() {
+      document.getElementById("feedback-box").classList.add("hidden");
+      updateProgressBar();
+      
+      const area = document.getElementById("activity-area");
+      area.innerHTML = ""; // Clear
+
+      if (currentStage === 1) {
+        // PREPOSITIONS OF TIME
+        document.getElementById("stage-title").innerText = "Stage 1: Prepositions of Time (at / in / on)";
+        document.getElementById("stage-desc").innerText = "Complete the daily routine sentences with the correct time preposition.";
+        
+        const q = stage1Questions[currentQuestionIndex];
+        const sentenceHTML = q.sentence.replace("___", `<span class="px-3 py-1 bg-amber-100 border-2 border-dashed border-amber-400 rounded-lg font-black text-amber-800 text-xl mx-1 inline-block">?</span>`);
+        
+        let optionsHTML = "";
+        q.options.forEach(opt => {
+          optionsHTML += `
+            <button onclick="checkStage1('${opt}')" class="bg-white hover:bg-sky-500 hover:text-white border-2 border-sky-400 text-sky-950 font-extrabold text-lg py-3 px-6 rounded-xl transition-all transform hover:-translate-y-0.5 shadow-sm">
+              ${opt.toUpperCase()}
+            </button>
+          `;
+        });
+
+        area.innerHTML = `
+          <div class="space-y-6 text-center">
+            <p class="text-xl font-medium text-slate-700 leading-relaxed">${sentenceHTML}</p>
+            <div class="flex justify-center gap-4 pt-4">
+              ${optionsHTML}
+            </div>
+          </div>
+        `;
+
+      } else if (currentStage === 2) {
+        // ADVERBS OF FREQUENCY (Sentence Builder)
+        document.getElementById("stage-title").innerText = "Stage 2: Adverbs of Frequency";
+        document.getElementById("stage-desc").innerText = "Click the words to put them in the correct grammar order!";
+        
+        const q = stage2Questions[currentQuestionIndex];
+        
+        // Shuffle helper
+        let shuffledWords = [...q.words].sort(() => Math.random() - 0.5);
+        // Make sure it's not accidentally correct already
+        if(shuffledWords.join(" ") === q.correctOrder.join(" ")) {
+          shuffledWords.reverse();
+        }
+
+        area.innerHTML = `
+          <div class="space-y-6">
+            <p class="text-sm text-sky-800 font-bold bg-sky-50 p-2 rounded-lg text-center">${q.instruction}</p>
+            
+            <!-- Result Display Box -->
+            <div id="built-sentence" class="min-h-[50px] p-4 bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl text-center text-lg font-bold text-sky-950">
+              <!-- Words will land here -->
+            </div>
+
+            <!-- Pool of Available Words -->
+            <div id="words-pool" class="flex flex-wrap justify-center gap-2 pt-2">
+              ${shuffledWords.map(word => `
+                <button onclick="moveWord(this)" class="bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold px-4 py-2 rounded-xl transition-all shadow-sm">
+                  ${word}
+                </button>
+              `).join('')}
+            </div>
+
+            <div class="flex justify-between pt-4">
+              <button onclick="resetBuiltSentence()" class="text-slate-500 hover:text-slate-800 font-bold text-sm">
+                Clear 🧹
+              </button>
+              <button onclick="checkStage2()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-6 py-2 rounded-xl shadow transition-colors">
+                Submit Answer! Check ✓
+              </button>
+            </div>
+          </div>
+        `;
+
+      } else if (currentStage === 3) {
+        // VOCABULARY MATCH-UP
+        document.getElementById("stage-title").innerText = "Stage 3: Green Routine Vocabulary";
+        document.getElementById("stage-desc").innerText = "Match the energetic concept to the appropriate action verb!";
+        
+        const q = stage3Questions[currentQuestionIndex];
+        
+        let optionsHTML = "";
+        q.options.forEach(opt => {
+          optionsHTML += `
+            <button onclick="checkStage3('${opt}')" class="bg-white hover:bg-emerald-500 hover:text-white border-2 border-emerald-400 text-emerald-950 font-extrabold text-base py-3 px-6 rounded-xl transition-all transform hover:-translate-y-0.5 shadow-sm w-full text-left flex items-center justify-between">
+              <span>${opt.toUpperCase()}</span>
+              <span class="text-sm text-slate-300">Select ➔</span>
+            </button>
+          `;
+        });
+
+        area.innerHTML = `
+          <div class="space-y-6">
+            <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl">
+              <span class="text-xs font-bold text-amber-600 block mb-1">DEFINTION / CONCEPT:</span>
+              <p class="text-slate-800 font-bold text-base">"${q.definition}"</p>
+            </div>
+            <div class="space-y-2">
+              ${optionsHTML}
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // --- STAGE 1 LOGIC ---
+    function checkStage1(selected) {
+      const q = stage1Questions[currentQuestionIndex];
+      if (selected === q.correct) {
+        updateScore(100);
+        triggerSuccess();
+        nextQuestionDelayed();
+      } else {
+        triggerFail(`Think about which preposition fits time expression: '${q.correct.toUpperCase()}'`);
+      }
+    }
+
+    // --- STAGE 2 LOGIC ---
+    function moveWord(btn) {
+      const built = document.getElementById("built-sentence");
+      const pool = document.getElementById("words-pool");
+      
+      if (btn.parentNode.id === "words-pool") {
+        built.appendChild(btn);
+        btn.className = "bg-sky-100 hover:bg-sky-200 border border-sky-300 text-sky-800 font-bold px-4 py-2 rounded-xl transition-all shadow-sm";
+      } else {
+        pool.appendChild(btn);
+        btn.className = "bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold px-4 py-2 rounded-xl transition-all shadow-sm";
+      }
+    }
+
+    function resetBuiltSentence() {
+      const built = document.getElementById("built-sentence");
+      const pool = document.getElementById("words-pool");
+      const buttons = Array.from(built.children);
+      buttons.forEach(btn => {
+        pool.appendChild(btn);
+        btn.className = "bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold px-4 py-2 rounded-xl transition-all shadow-sm";
+      });
+    }
+
+    function checkStage2() {
+      const q = stage2Questions[currentQuestionIndex];
+      const built = document.getElementById("built-sentence");
+      const currentOrder = Array.from(built.children).map(btn => btn.innerText.trim());
+
+      if (currentOrder.join(" ") === q.correctOrder.join(" ")) {
+        updateScore(100);
+        triggerSuccess();
+        nextQuestionDelayed();
+      } else {
+        triggerFail(q.hint);
+      }
+    }
+
+    // --- STAGE 3 LOGIC ---
+    function checkStage3(selected) {
+      const q = stage3Questions[currentQuestionIndex];
+      if (selected === q.verb) {
+        updateScore(100);
+        triggerSuccess();
+        nextQuestionDelayed();
+      } else {
+        triggerFail(`This concept refers to the actions: '${q.verb.toUpperCase()}'.`);
+      }
+    }
+
+    // --- GAME ENGINE FLOW ---
+    function nextQuestionDelayed() {
+      // Small timeout to allow reading feedback
+      setTimeout(() => {
+        currentQuestionIndex++;
+        
+        // Check transition to next stage
+        if (currentStage === 1 && currentQuestionIndex >= stage1Questions.length) {
+          currentStage = 2;
+          currentQuestionIndex = 0;
+        } else if (currentStage === 2 && currentQuestionIndex >= stage2Questions.length) {
+          currentStage = 3;
+          currentQuestionIndex = 0;
+        } else if (currentStage === 3 && currentQuestionIndex >= stage3Questions.length) {
+          // Finish Game
+          endGame();
+          return;
+        }
+        
+        loadStageQuestion();
+      }, 1500);
+    }
+
+    function endGame() {
+      // Update max bonus score
+      updateScore(0);
+      document.getElementById("level-screen").classList.add("hidden");
+      document.getElementById("final-screen").classList.remove("hidden");
+      document.getElementById("final-score").innerText = score;
+    }
+
+    function restartGame() {
+      startGame();
+    }
+
+    function shareResult() {
+      alert(`🎉 Certificate Unlocked!\nStudent achieved: ${score} points\nWell done Energy Saver!`);
+    }
+  </script>
+</body>
+</html>
